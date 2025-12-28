@@ -48,10 +48,10 @@ export const ExpenseView: React.FC<ExpenseViewProps> = ({ expenses, onDelete, mo
 
   const getCategoryLabel = (cat: ExpenseCategory) => {
     switch (cat) {
-        case 'FOOD': return '飲食 (FOOD)';
-        case 'ESSENTIAL': return '必要 (ESSENTIAL)';
-        case 'ENTERTAINMENT': return '娛樂 (FUN)';
-        case 'SUPPLIES': return '用品 (SUPPLIES)';
+        case 'FOOD': return 'FOOD';
+        case 'ESSENTIAL': return 'ESSENTIAL';
+        case 'ENTERTAINMENT': return 'FUN';
+        case 'SUPPLIES': return 'SUPPLIES';
     }
   }
 
