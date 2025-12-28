@@ -84,6 +84,10 @@ const App: React.FC = () => {
     setTasks(tasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted } : t));
   };
 
+  const updateTask = (updatedTask: Task) => {
+    setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+  };
+
   const deleteTask = (id: string) => {
     setTasks(tasks.filter(t => t.id !== id));
   };
@@ -103,7 +107,8 @@ const App: React.FC = () => {
         setExpAmount('');
         setExpCategory('FOOD');
         setExpNote('');
-        const nowStr = format(initialDate || new Date(), "yyyy-MM-dd'T'HH:mm");
+        // Format for Date Input (YYYY-MM-DD)
+        const nowStr = format(initialDate || new Date(), "yyyy-MM-dd");
         setExpDate(nowStr);
         setIsModalOpen(true);
         return;
@@ -151,7 +156,7 @@ const App: React.FC = () => {
             id: crypto.randomUUID(),
             amount: parseFloat(expAmount),
             category: expCategory,
-            date: expDate,
+            date: expDate, // Stores YYYY-MM-DD
             note: expNote
         };
         setExpenses(prev => [...prev, newExpense]);
@@ -167,16 +172,12 @@ const App: React.FC = () => {
 
     const start = new Date(formExecStart);
     const end = new Date(formExecEnd);
-    const deadline = new Date(formDeadline);
-
+    
+    // Simple validation
     if (start >= end) {
       setErrorMessage("TIME PARADOX: START MUST PRECEDE END");
       return;
     }
-
-    // Removed the "End > Deadline" check to allow flexibility, 
-    // or we can keep it but user requested syncing so they are likely same.
-    // Keeping it loosely validated.
 
     if (editingTaskId) {
       setTasks(prev => prev.map(t => 
@@ -198,7 +199,8 @@ const App: React.FC = () => {
         executionStart: formExecStart,
         executionEnd: formExecEnd,
         isCompleted: false,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        subtasks: []
       };
       setTasks(prev => [...prev, newTask]);
     }
@@ -226,7 +228,8 @@ const App: React.FC = () => {
       executionStart: format(start, "yyyy-MM-dd'T'HH:mm"),
       executionEnd: endStr,
       isCompleted: false,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      subtasks: []
     };
     
     setTasks(prev => [...prev, newTask]);
@@ -330,6 +333,7 @@ const App: React.FC = () => {
                     onToggle={toggleTask} 
                     onDelete={deleteTask}
                     onEdit={(t) => openModal(t)}
+                    onUpdate={updateTask}
                 />
                 ))}
             </div>
@@ -452,7 +456,7 @@ const App: React.FC = () => {
                     <div>
                         <label className="block text-[10px] font-bold text-slate-500 font-tech uppercase tracking-widest mb-1">Date</label>
                         <input 
-                            type="datetime-local" 
+                            type="date" 
                             value={expDate}
                             onChange={(e) => setExpDate(e.target.value)}
                             className="w-full bg-black/60 border border-slate-700 text-cyan-100 rounded-none px-4 py-3 text-sm font-mono focus:outline-none focus:border-cyan-500"
