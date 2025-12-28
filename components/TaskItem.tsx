@@ -1,6 +1,6 @@
-import React from 'react';
-import { Task } from '../types';
-import { Check, AlertCircle, Trash2, Edit2, Clock, Crosshair } from 'lucide-react';
+import React, { useState } from 'react';
+import { Task, Subtask } from '../types';
+import { Check, AlertCircle, Trash2, Edit2, Clock, Crosshair, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { format, isPast, isSameDay } from 'date-fns';
 
 interface TaskItemProps {
@@ -8,9 +8,13 @@ interface TaskItemProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
+  onUpdate: (task: Task) => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onEdit, onUpdate }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [newSubtaskContent, setNewSubtaskContent] = useState('');
+
   const isOverdue = !task.isCompleted && isPast(new Date(task.deadline));
   
   const start = new Date(task.executionStart);
@@ -24,6 +28,43 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, on
     : `${format(start, 'MM/dd HH:mm')} > ${format(end, 'MM/dd HH:mm')}`;
 
   const dateDisplay = format(start, 'MMM d').toUpperCase();
+
+  // Subtask Handlers
+  const handleAddSubtask = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!newSubtaskContent.trim()) return;
+
+    const newSubtask: Subtask = {
+      id: crypto.randomUUID(),
+      content: newSubtaskContent.trim(),
+      isCompleted: false
+    };
+
+    const updatedTask = {
+      ...task,
+      subtasks: [...(task.subtasks || []), newSubtask]
+    };
+
+    onUpdate(updatedTask);
+    setNewSubtaskContent('');
+  };
+
+  const toggleSubtask = (subtaskId: string) => {
+    const updatedSubtasks = (task.subtasks || []).map(st => 
+      st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
+    );
+    onUpdate({ ...task, subtasks: updatedSubtasks });
+  };
+
+  const deleteSubtask = (subtaskId: string) => {
+    const updatedSubtasks = (task.subtasks || []).filter(st => st.id !== subtaskId);
+    onUpdate({ ...task, subtasks: updatedSubtasks });
+  };
+
+  const completedSubtasks = (task.subtasks || []).filter(st => st.isCompleted).length;
+  const totalSubtasks = (task.subtasks || []).length;
+  const progress = totalSubtasks === 0 ? 0 : (completedSubtasks / totalSubtasks) * 100;
 
   return (
     <div className={`
@@ -50,7 +91,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, on
             </div>
         </div>
 
-        <div className="p-4 flex gap-4">
+        {/* Main Content (Click to Expand) */}
+        <div 
+            className="p-4 flex gap-4 cursor-pointer hover:bg-white/5 transition-colors"
+            onClick={() => setIsExpanded(!isExpanded)}
+        >
             {/* Action Checkbox */}
             <button
             onClick={(e) => {
@@ -67,34 +112,92 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, on
             {task.isCompleted && <Check size={18} />}
             </button>
 
-            {/* Main Content */}
-            <div 
-            className="flex-1 cursor-pointer"
-            onClick={() => onEdit(task)}
-            >
-            <h3 className={`text-lg font-bold font-tech tracking-wide mb-2 ${task.isCompleted ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-100 shadow-black drop-shadow-md'}`}>
-                {task.content}
-            </h3>
+            {/* Content Text */}
+            <div className="flex-1">
+                <div className="flex justify-between items-start">
+                    <h3 className={`text-lg font-bold font-tech tracking-wide mb-2 ${task.isCompleted ? 'text-slate-500 line-through decoration-slate-600' : 'text-slate-100 shadow-black drop-shadow-md'}`}>
+                        {task.content}
+                    </h3>
+                    <div className="text-slate-500">
+                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
+                </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {/* Time Window */}
-                <div className="flex items-center gap-2 text-cyan-200 bg-cyan-950/40 px-2 py-1 border border-cyan-900/50 w-fit">
-                    <Clock size={12} className="text-cyan-400" />
-                    <span className="font-bold text-cyan-500">{dateDisplay}</span>
-                    <span className="text-slate-400">|</span>
-                    <span className="font-mono">{timeDisplay}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {/* Time Window */}
+                    <div className="flex items-center gap-2 text-cyan-200 bg-cyan-950/40 px-2 py-1 border border-cyan-900/50 w-fit">
+                        <Clock size={12} className="text-cyan-400" />
+                        <span className="font-bold text-cyan-500">{dateDisplay}</span>
+                        <span className="text-slate-400">|</span>
+                        <span className="font-mono">{timeDisplay}</span>
+                    </div>
+
+                    {/* Deadline */}
+                    <div className={`flex items-center gap-2 px-2 py-1 w-fit border border-transparent ${isOverdue ? 'text-red-400 bg-red-950/30 border-red-900/50' : 'text-slate-400'}`}>
+                        <AlertCircle size={12} />
+                        <span className="uppercase tracking-wider">TIMEOUT: {format(deadline, 'MM/dd HH:mm')}</span>
+                    </div>
                 </div>
 
-                {/* Deadline */}
-                <div className={`flex items-center gap-2 px-2 py-1 w-fit border border-transparent ${isOverdue ? 'text-red-400 bg-red-950/30 border-red-900/50' : 'text-slate-400'}`}>
-                    <AlertCircle size={12} />
-                    <span className="uppercase tracking-wider">TIMEOUT: {format(deadline, 'MM/dd HH:mm')}</span>
-                </div>
-            </div>
+                {/* Subtask Mini Progress Indicator (when collapsed) */}
+                {!isExpanded && totalSubtasks > 0 && (
+                     <div className="mt-3 flex items-center gap-2">
+                        <div className="h-1 flex-1 bg-slate-800 rounded-full overflow-hidden max-w-[100px]">
+                            <div className="h-full bg-cyan-500 transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                        </div>
+                        <span className="text-[9px] font-mono text-cyan-600">{completedSubtasks}/{totalSubtasks} STEPS</span>
+                     </div>
+                )}
             </div>
         </div>
 
-        {/* Action Bar (Slide out or static bottom) */}
+        {/* Expanded Subtask Area */}
+        {isExpanded && (
+            <div className="border-t border-cyan-900/30 bg-black/20 p-4 animate-in slide-in-from-top-2 duration-200">
+                <div className="mb-3 space-y-2">
+                    {(task.subtasks || []).map(subtask => (
+                        <div key={subtask.id} className="flex items-center gap-3 group">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); toggleSubtask(subtask.id); }}
+                                className={`w-4 h-4 border border-slate-600 flex items-center justify-center transition-colors ${subtask.isCompleted ? 'bg-cyan-600 border-cyan-500' : 'hover:border-cyan-400'}`}
+                            >
+                                {subtask.isCompleted && <Check size={10} className="text-white" />}
+                            </button>
+                            <span className={`text-sm font-mono flex-1 ${subtask.isCompleted ? 'text-slate-600 line-through' : 'text-cyan-100'}`}>
+                                {subtask.content}
+                            </span>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); deleteSubtask(subtask.id); }}
+                                className="text-slate-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                <form onSubmit={handleAddSubtask} className="flex gap-2 relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-cyan-900/50 -translate-x-4"></div>
+                    <input 
+                        type="text" 
+                        value={newSubtaskContent}
+                        onChange={(e) => setNewSubtaskContent(e.target.value)}
+                        placeholder="Add tactical step..."
+                        className="flex-1 bg-black/40 border border-slate-700 text-xs px-2 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono placeholder-slate-600"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    <button 
+                        type="submit"
+                        className="bg-cyan-900/30 border border-cyan-700 text-cyan-400 px-2 hover:bg-cyan-800/30 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Plus size={14} />
+                    </button>
+                </form>
+            </div>
+        )}
+
+        {/* Action Bar */}
         <div className="flex justify-end gap-0 border-t border-white/5 bg-black/20">
             <button 
                 onClick={(e) => { e.stopPropagation(); onEdit(task); }}
