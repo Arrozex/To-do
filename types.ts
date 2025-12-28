@@ -11,11 +11,22 @@ export interface Task {
 export enum ViewMode {
   LIST = 'LIST',
   CALENDAR = 'CALENDAR',
-  STATS = 'STATS'
+  STATS = 'STATS',
+  EXPENSES = 'EXPENSES'
 }
 
 export interface AIGeneratedTask {
   content: string;
   estimatedDurationHours: number;
   priority: 'high' | 'medium' | 'low';
+}
+
+export type ExpenseCategory = 'FOOD' | 'ESSENTIAL' | 'ENTERTAINMENT' | 'SUPPLIES';
+
+export interface Expense {
+  id: string;
+  amount: number;
+  category: ExpenseCategory;
+  date: string; // ISO Date String
+  note: string;
 }
