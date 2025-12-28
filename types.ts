@@ -1,3 +1,9 @@
+export interface Subtask {
+  id: string;
+  content: string;
+  isCompleted: boolean;
+}
+
 export interface Task {
   id: string;
   content: string;
@@ -6,6 +12,7 @@ export interface Task {
   executionEnd: string; // ISO Date String
   isCompleted: boolean;
   createdAt: number;
+  subtasks: Subtask[];
 }
 
 export enum ViewMode {
@@ -27,6 +34,6 @@ export interface Expense {
   id: string;
   amount: number;
   category: ExpenseCategory;
-  date: string; // ISO Date String
+  date: string; // ISO Date String (YYYY-MM-DD)
   note: string;
 }
