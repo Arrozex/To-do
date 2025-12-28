@@ -88,7 +88,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, on
                 {/* Deadline */}
                 <div className={`flex items-center gap-2 px-2 py-1 w-fit border border-transparent ${isOverdue ? 'text-red-400 bg-red-950/30 border-red-900/50' : 'text-slate-400'}`}>
                     <AlertCircle size={12} />
-                    <span className="uppercase tracking-wider">TIMEOUT: {format(deadline, 'HH:mm')}</span>
+                    <span className="uppercase tracking-wider">TIMEOUT: {format(deadline, 'MM/dd HH:mm')}</span>
                 </div>
             </div>
             </div>
