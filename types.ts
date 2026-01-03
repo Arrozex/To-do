@@ -36,4 +36,6 @@ export interface Expense {
   category: ExpenseCategory;
   date: string; // ISO Date String (YYYY-MM-DD)
   note: string;
+  isConfirmed: boolean; // Locked state
+  isReceived: boolean;  // Asset acquired state
 }
