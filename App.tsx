@@ -94,8 +94,15 @@ const App: React.FC = () => {
 
   // --- Expense Handlers ---
   const deleteExpense = (id: string) => {
+    // Double check just in case, though UI should prevent it
+    const expense = expenses.find(e => e.id === id);
+    if (expense && expense.isConfirmed) return; 
     setExpenses(expenses.filter(e => e.id !== id));
   }
+
+  const updateExpense = (updatedExpense: Expense) => {
+    setExpenses(expenses.map(e => e.id === updatedExpense.id ? updatedExpense : e));
+  };
 
   const openModal = (task?: Task, initialDate?: Date) => {
     setAiSuggestions([]);
@@ -157,7 +164,9 @@ const App: React.FC = () => {
             amount: parseFloat(expAmount),
             category: expCategory,
             date: expDate, // Stores YYYY-MM-DD
-            note: expNote
+            note: expNote,
+            isConfirmed: false,
+            isReceived: false
         };
         setExpenses(prev => [...prev, newExpense]);
         setIsModalOpen(false);
@@ -294,6 +303,7 @@ const App: React.FC = () => {
             <ExpenseView 
                 expenses={expenses} 
                 onDelete={deleteExpense} 
+                onUpdate={updateExpense}
                 monthlyLimit={monthlyLimit}
                 onUpdateLimit={setMonthlyLimit}
             />
