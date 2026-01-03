@@ -1,16 +1,17 @@
 import React from 'react';
 import { Expense, ExpenseCategory } from '../types';
 import { format } from 'date-fns';
-import { ShoppingCart, Coffee, ShieldAlert, Gamepad2, TrendingUp, DollarSign, Trash2 } from 'lucide-react';
+import { ShoppingCart, Coffee, ShieldAlert, Gamepad2, TrendingUp, DollarSign, Trash2, CheckSquare, Lock, Unlock, Package, PackageCheck } from 'lucide-react';
 
 interface ExpenseViewProps {
   expenses: Expense[];
   onDelete: (id: string) => void;
+  onUpdate: (expense: Expense) => void;
   monthlyLimit: number;
   onUpdateLimit: (limit: number) => void;
 }
 
-export const ExpenseView: React.FC<ExpenseViewProps> = ({ expenses, onDelete, monthlyLimit, onUpdateLimit }) => {
+export const ExpenseView: React.FC<ExpenseViewProps> = ({ expenses, onDelete, onUpdate, monthlyLimit, onUpdateLimit }) => {
   
   // Calculate Totals
   const totalSpent = expenses.reduce((sum, item) => sum + item.amount, 0);
@@ -48,11 +49,19 @@ export const ExpenseView: React.FC<ExpenseViewProps> = ({ expenses, onDelete, mo
 
   const getCategoryLabel = (cat: ExpenseCategory) => {
     switch (cat) {
-        case 'FOOD': return 'FOOD';
-        case 'ESSENTIAL': return 'ESSENTIAL';
-        case 'ENTERTAINMENT': return 'FUN';
-        case 'SUPPLIES': return 'SUPPLIES';
+        case 'FOOD': return '飲食 (FOOD)';
+        case 'ESSENTIAL': return '必要 (ESSENTIAL)';
+        case 'ENTERTAINMENT': return '娛樂 (FUN)';
+        case 'SUPPLIES': return '用品 (SUPPLIES)';
     }
+  }
+
+  const toggleConfirm = (expense: Expense) => {
+    onUpdate({ ...expense, isConfirmed: !expense.isConfirmed });
+  }
+
+  const toggleReceived = (expense: Expense) => {
+    onUpdate({ ...expense, isReceived: !expense.isReceived });
   }
 
   return (
@@ -115,24 +124,65 @@ export const ExpenseView: React.FC<ExpenseViewProps> = ({ expenses, onDelete, mo
 
                     <div className="space-y-2">
                         {groupedExpenses[month].map(expense => (
-                            <div key={expense.id} className="bg-black/40 border border-slate-800 p-3 flex justify-between items-center group hover:border-cyan-500/30 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 flex items-center justify-center border rounded-sm ${getCategoryColor(expense.category)}`}>
+                            <div key={expense.id} 
+                                className={`
+                                    border p-3 flex justify-between items-center transition-all duration-300 relative overflow-hidden
+                                    ${expense.isConfirmed 
+                                        ? 'bg-black/60 border-slate-700/50 opacity-80' 
+                                        : 'bg-black/40 border-slate-800 hover:border-cyan-500/30'}
+                                `}
+                            >
+                                {/* Diagonal Stripes for Confirmed/Locked */}
+                                {expense.isConfirmed && (
+                                    <div className="absolute inset-0 pointer-events-none opacity-5" style={{ backgroundImage: 'linear-gradient(45deg, #ffffff 10%, transparent 10%, transparent 50%, #ffffff 50%, #ffffff 60%, transparent 60%, transparent 100%)', backgroundSize: '10px 10px' }}></div>
+                                )}
+
+                                <div className="flex items-center gap-3 relative z-10">
+                                    <div className={`w-10 h-10 flex items-center justify-center border rounded-sm transition-colors ${expense.isConfirmed ? 'grayscale opacity-50' : ''} ${getCategoryColor(expense.category)}`}>
                                         {getCategoryIcon(expense.category)}
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-slate-200">{expense.note}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className={`text-sm font-bold transition-colors ${expense.isConfirmed ? 'text-slate-400' : 'text-slate-200'}`}>{expense.note}</p>
+                                            {expense.isConfirmed && <Lock size={10} className="text-slate-500" />}
+                                            {expense.isReceived && <PackageCheck size={10} className="text-green-500" />}
+                                        </div>
                                         <p className="text-[10px] text-slate-500 font-tech">{getCategoryLabel(expense.category)} • {format(new Date(expense.date), 'MM/dd')}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="font-mono font-bold text-cyan-100">${expense.amount.toLocaleString()}</span>
-                                    <button 
-                                        onClick={() => onDelete(expense.id)}
-                                        className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                <div className="flex items-center gap-2 relative z-10">
+                                    <span className={`font-mono font-bold text-sm ${expense.isConfirmed ? 'text-slate-400' : 'text-cyan-100'}`}>${expense.amount.toLocaleString()}</span>
+                                    
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center gap-1 pl-2 border-l border-slate-800 ml-2">
+                                        {/* Received Toggle */}
+                                        <button 
+                                            onClick={() => toggleReceived(expense)}
+                                            className={`p-1.5 rounded transition-all ${expense.isReceived ? 'text-green-400 bg-green-900/20' : 'text-slate-600 hover:text-green-400'}`}
+                                            title="Toggle Received Status"
+                                        >
+                                            {expense.isReceived ? <PackageCheck size={14} /> : <Package size={14} />}
+                                        </button>
+
+                                        {/* Confirm/Lock Toggle */}
+                                        <button 
+                                            onClick={() => toggleConfirm(expense)}
+                                            className={`p-1.5 rounded transition-all ${expense.isConfirmed ? 'text-cyan-500 bg-cyan-950/30' : 'text-slate-600 hover:text-cyan-400'}`}
+                                            title={expense.isConfirmed ? "Locked (Authorized)" : "Confirm & Lock"}
+                                        >
+                                            {expense.isConfirmed ? <CheckSquare size={14} /> : <div className="w-3.5 h-3.5 border border-slate-500 rounded-sm"></div>}
+                                        </button>
+
+                                        {/* Delete (Only if NOT confirmed) */}
+                                        {!expense.isConfirmed && (
+                                            <button 
+                                                onClick={() => onDelete(expense.id)}
+                                                className="p-1.5 text-slate-600 hover:text-red-400 transition-colors"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
