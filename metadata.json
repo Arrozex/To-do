@@ -1,0 +1,5 @@
+{
+  "name": "MerchTracker",
+  "description": "A clean and simple app to track online shopping and merch purchases, with timeline status and monthly budget.",
+  "requestFramePermissions": []
+}
