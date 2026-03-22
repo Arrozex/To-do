@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Purchase, PurchaseStages } from './types';
 import { PurchaseItem } from './components/PurchaseItem';
-import { Plus, ChevronLeft, ChevronRight, ShoppingBag, Settings, X, Tag, Filter } from 'lucide-react';
+import { BudgetApproval } from './components/BudgetApproval';
+import { Plus, ChevronLeft, ChevronRight, ShoppingBag, Settings, X, Tag, Filter, FileSpreadsheet } from 'lucide-react';
 import { format, parseISO, isSameMonth, addMonths, subMonths } from 'date-fns';
 
 const COLOR_PICKER_CLASSES: Record<string, string> = {
@@ -43,6 +44,9 @@ const App: React.FC = () => {
   const [formNote, setFormNote] = useState('');
   const [formTag, setFormTag] = useState('');
   const [formTagColor, setFormTagColor] = useState('fuchsia');
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'TRACKER' | 'APPROVAL'>('TRACKER');
 
   useEffect(() => {
     localStorage.setItem('merch_purchases', JSON.stringify(purchases));
@@ -168,11 +172,32 @@ const App: React.FC = () => {
             <Settings size={22} className="sm:w-5 sm:h-5" />
           </button>
         </div>
+        
+        {/* Tabs */}
+        <div className="max-w-3xl mx-auto px-4 flex gap-4 border-t border-cyan-900/30">
+          <button
+            onClick={() => setActiveTab('TRACKER')}
+            className={`py-3 text-sm font-tech tracking-widest transition-all relative ${activeTab === 'TRACKER' ? 'text-cyan-400 font-bold' : 'text-cyan-700 hover:text-cyan-500'}`}
+          >
+            TRACKER
+            {activeTab === 'TRACKER' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('APPROVAL')}
+            className={`py-3 text-sm font-tech tracking-widest transition-all relative flex items-center gap-1.5 ${activeTab === 'APPROVAL' ? 'text-cyan-400 font-bold' : 'text-cyan-700 hover:text-cyan-500'}`}
+          >
+            <FileSpreadsheet size={16} />
+            APPROVAL
+            {activeTab === 'APPROVAL' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />}
+          </button>
+        </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* Month Selector & Budget Overview */}
-        <div className="holo-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 mb-6 sm:mb-8">
+        {activeTab === 'TRACKER' ? (
+          <>
+            {/* Month Selector & Budget Overview */}
+            <div className="holo-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 mb-6 sm:mb-8">
           <div className="flex items-center justify-between mb-5 sm:mb-6">
             <button onClick={handlePrevMonth} className="p-3 sm:p-2 hover:bg-cyan-950/50 rounded-full transition-colors active:bg-cyan-900/50">
               <ChevronLeft size={22} className="text-cyan-500 sm:w-5 sm:h-5" />
@@ -276,15 +301,21 @@ const App: React.FC = () => {
             ))
           )}
         </div>
+          </>
+        ) : (
+          <BudgetApproval />
+        )}
       </main>
 
       {/* FAB */}
-      <button
-        onClick={() => openModal()}
-        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 w-14 h-14 sm:w-16 sm:h-16 bg-cyan-500 text-black rounded-full shadow-[0_0_15px_rgba(6,182,212,0.5)] flex items-center justify-center hover:bg-cyan-400 hover:scale-105 transition-all z-40 active:scale-95 border border-cyan-300"
-      >
-        <Plus className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2.5} />
-      </button>
+      {activeTab === 'TRACKER' && (
+        <button
+          onClick={() => openModal()}
+          className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 w-14 h-14 sm:w-16 sm:h-16 bg-cyan-500 text-black rounded-full shadow-[0_0_15px_rgba(6,182,212,0.5)] flex items-center justify-center hover:bg-cyan-400 hover:scale-105 transition-all z-40 active:scale-95 border border-cyan-300"
+        >
+          <Plus className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2.5} />
+        </button>
+      )}
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
